@@ -2,7 +2,7 @@
 
 Schritt-für-Schritt Anleitung zum Einrichten des [Pi Coding Agent](https://pi.dev/) auf Windows 11 mit lokalem Ollama-Modell.
 
-> 📺 Einführungsvideo (Englisch): [Pi Agent + Ollama + Gemma4](https://www.youtube.com/watch?v=MwOgfB4E8HE&t=6s)
+> 📺 Einführungsvideo (https://www.youtube.com/watch?v=MwOgfB4E8HE&t=6s)
 
 ---
 
