@@ -191,6 +191,70 @@ Konfigurationsdatei: `C:\Users\<username>\.pi\free-web-search.json`
 
 ---
 
+## pi-launcher — Browser-GUI
+
+Eine lokale Web-GUI zum Starten von Pi-Prompts, Verwalten von Ollama und Wechseln des Modells — alles im Browser, ohne zusätzliche Abhängigkeiten.
+
+Die Dateien liegen im Ordner [`pi-launcher/`](./pi-launcher/).
+
+### Voraussetzungen
+
+- Python 3.7 oder neuer (nur Standardbibliothek, keine Pip-Pakete nötig)
+- Ollama ist installiert und lokal erreichbar (Port `11434`)
+- Pi ist installiert (`npm install -g @mariozechner/pi-coding-agent`)
+
+### Starten
+
+```powershell
+cd pi-launcher
+python server.py
+```
+
+Danach `pi-launcher\index.html` direkt im Browser öffnen (Doppelklick oder per `file:///...`-Adresse). Der Server muss im Hintergrund laufen.
+
+### Aufbau der Oberfläche
+
+**Topbar**
+
+| Element | Funktion |
+|---------|----------|
+| `● Ollama läuft` / `● Ollama starten` | Statusanzeige. Klick startet `ollama serve` und zeigt den Output live im Ollama-Tab der Sidebar. Grün = läuft, Rot = gestoppt, Gelb = startet. |
+| Modell-Dropdown (`qwen3.5 ▾`) | Zeigt alle lokal installierten Ollama-Modelle mit Dateigröße. Auswahl schreibt sofort in `~/.pi/agent/settings.json`. Nur sichtbar wenn Ollama läuft. |
+| `● Pi öffnen` | Öffnet ein neues CMD-Fenster mit `pi` im konfigurierten Arbeitsverzeichnis. Grüner Punkt solange das Fenster offen ist. |
+| `⚙` | Einstellungen: Arbeitsverzeichnis ändern (Standard: `~/Desktop/pi-aufgaben`). |
+
+**Prompt-Buttons**
+
+- Gespeicherte Prompts erscheinen als Kacheln im Grid.
+- **Klick** startet `pi -p "<prompt>"` im Arbeitsverzeichnis — Output erscheint live im Tab „Pi-Output" der Sidebar.
+- **Hover** zeigt den letzten Output des Prompts als Tooltip.
+- `✕`-Symbol beim Hovern löscht den Prompt.
+- Laufende Prompts zeigen einen animierten grünen Punkt.
+- **„+ Neuer Prompt"**: Name und Prompt-Text eingeben, im `localStorage` gespeichert.
+
+**Sidebar (rechts)**
+
+| Tab | Inhalt |
+|-----|--------|
+| Ollama | Live-Output von `ollama serve` beim Start |
+| Pi-Output | Live-Output des zuletzt gestarteten Prompts mit Status (● läuft / ✓ fertig) |
+
+### Konfiguration
+
+| Datei | Inhalt |
+|-------|--------|
+| `pi-launcher\config.json` | Arbeitsverzeichnis (wird vom Server geschrieben) |
+| `%USERPROFILE%\.pi\agent\settings.json` | Aktives Modell (wird vom Modell-Dropdown geschrieben) |
+
+### Technische Details
+
+- `server.py` läuft auf `http://localhost:8765` — Python-Standardbibliothek, keine Pip-Abhängigkeiten
+- Prompts und Ollama-Start werden per **Server-Sent Events (SSE)** live gestreamt
+- `index.html` ist eine einzelne Datei mit inline CSS/JS — kein CDN, kein Framework
+- CORS-Header ermöglichen den direkten Aufruf als `file://` im Browser
+
+---
+
 ## Referenzen
 
 - [pi.dev](https://pi.dev/) — Offizielle Website
