@@ -229,7 +229,24 @@
     line-height: 1.4;
   }
 
+  .prompt-btn .btn-edit {
+    display: none;
+    position: absolute;
+    top: 4px;
+    right: 30px;
+    padding: 1px 5px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text-dim);
+    font-size: 11px;
+    cursor: pointer;
+    line-height: 1.4;
+  }
+  .prompt-btn .btn-edit:hover { color: var(--text-bright); background: var(--border); }
+
   .prompt-btn:hover .btn-delete { display: block; }
+  .prompt-btn:hover .btn-edit { display: block; }
 
   .running-indicator {
     display: none;
@@ -571,10 +588,10 @@
   <div id="tooltipBody"></div>
 </div>
 
-<!-- New Prompt modal -->
+<!-- New/Edit Prompt modal -->
 <div class="modal-overlay hidden" id="newPromptModal">
   <div class="modal-box">
-    <h2>Neuer Prompt</h2>
+    <h2 id="newPromptModalTitle">Neuer Prompt</h2>
     <div class="form-group">
       <label>Name</label>
       <input type="text" id="newName" placeholder="z.B. Aufgabe zusammenfassen" autocomplete="off">
@@ -587,6 +604,10 @@
     <div class="form-group">
       <label>Prompt-Text</label>
       <textarea id="newPromptText" placeholder="Schreibe einen Prompt für pi..."></textarea>
+    </div>
+    <div style="display:flex;align-items:center;gap:0.55rem;margin-bottom:0.75rem;">
+      <input type="checkbox" id="newComplete" style="width:auto;cursor:pointer;accent-color:var(--accent);flex-shrink:0">
+      <label for="newComplete" style="font-size:12px;color:var(--text);cursor:pointer;user-select:none">Aufgabe vollständig abarbeiten</label>
     </div>
     <div class="form-error" id="newPromptError"></div>
     <div class="modal-actions">
@@ -731,6 +752,15 @@ function createPromptButton(p) {
   label.className = "btn-label";
   label.textContent = p.name;
 
+  const edit = document.createElement("button");
+  edit.className = "btn-edit";
+  edit.textContent = "✎";
+  edit.title = "Bearbeiten";
+  edit.addEventListener("click", (e) => {
+    e.stopPropagation();
+    openEditPromptModal(p);
+  });
+
   const del = document.createElement("button");
   del.className = "btn-delete";
   del.textContent = "✕";
@@ -744,6 +774,7 @@ function createPromptButton(p) {
   indicator.className = "running-indicator";
 
   btn.appendChild(label);
+  btn.appendChild(edit);
   btn.appendChild(del);
   btn.appendChild(indicator);
 
@@ -784,7 +815,10 @@ function runPrompt(id) {
   switchSidebarTab("pi-output");
   updateSidebarPiOutput(id);
 
-  streamRun(id, p.prompt);
+  const promptText = p.complete
+    ? p.prompt + "\n\nArbeite die Aufgabe vollständig ab."
+    : p.prompt;
+  streamRun(id, promptText);
 }
 
 async function streamRun(id, promptText) {
@@ -936,15 +970,11 @@ function updateTooltipIfVisible(id) {
   }
 }
 
-// ── New Prompt modal ──────────────────────────────────────────────────────────
+// ── New / Edit Prompt modal ───────────────────────────────────────────────────
 
-function openNewPromptModal() {
-  document.getElementById("newName").value = "";
-  document.getElementById("newGroup").value = "";
-  document.getElementById("newPromptText").value = "";
-  document.getElementById("newPromptError").textContent = "";
+let editingId = null;
 
-  // Populate group autocomplete
+function _populateGroupList() {
   const dl = document.getElementById("groupList");
   dl.innerHTML = "";
   getGroups().filter(g => g).forEach(g => {
@@ -952,7 +982,30 @@ function openNewPromptModal() {
     opt.value = g;
     dl.appendChild(opt);
   });
+}
 
+function openNewPromptModal() {
+  editingId = null;
+  document.getElementById("newPromptModalTitle").textContent = "Neuer Prompt";
+  document.getElementById("newName").value = "";
+  document.getElementById("newGroup").value = "";
+  document.getElementById("newPromptText").value = "";
+  document.getElementById("newComplete").checked = false;
+  document.getElementById("newPromptError").textContent = "";
+  _populateGroupList();
+  document.getElementById("newPromptModal").classList.remove("hidden");
+  document.getElementById("newName").focus();
+}
+
+function openEditPromptModal(p) {
+  editingId = p.id;
+  document.getElementById("newPromptModalTitle").textContent = "Prompt bearbeiten";
+  document.getElementById("newName").value = p.name;
+  document.getElementById("newGroup").value = p.group || "";
+  document.getElementById("newPromptText").value = p.prompt;
+  document.getElementById("newComplete").checked = !!p.complete;
+  document.getElementById("newPromptError").textContent = "";
+  _populateGroupList();
   document.getElementById("newPromptModal").classList.remove("hidden");
   document.getElementById("newName").focus();
 }
@@ -964,20 +1017,33 @@ function closeNewPromptModal() {
 function saveNewPrompt() {
   const name = document.getElementById("newName").value.trim();
   const prompt = document.getElementById("newPromptText").value.trim();
-  const err = document.getElementById("newPromptError");
-
   const group = document.getElementById("newGroup").value.trim();
+  const complete = document.getElementById("newComplete").checked;
+  const err = document.getElementById("newPromptError");
 
   if (!name) { err.textContent = "Bitte einen Namen eingeben."; return; }
   if (!prompt) { err.textContent = "Bitte einen Prompt-Text eingeben."; return; }
 
-  const entry = { id: genId(), name, prompt };
-  if (group) entry.group = group;
-  state.prompts.push(entry);
+  if (editingId) {
+    const idx = state.prompts.findIndex(p => p.id === editingId);
+    if (idx !== -1) {
+      const entry = { id: editingId, name, prompt };
+      if (group) entry.group = group;
+      if (complete) entry.complete = true;
+      state.prompts[idx] = entry;
+    }
+    showToast("Prompt aktualisiert");
+  } else {
+    const entry = { id: genId(), name, prompt };
+    if (group) entry.group = group;
+    if (complete) entry.complete = true;
+    state.prompts.push(entry);
+    showToast("Prompt gespeichert");
+  }
+
   savePrompts();
   renderGrid();
   closeNewPromptModal();
-  showToast("Prompt gespeichert");
 }
 
 // ── Export / Import ───────────────────────────────────────────────────────────
