@@ -197,6 +197,8 @@ Eine lokale Web-GUI zum Starten von Pi-Prompts, Verwalten von Ollama und Wechsel
 
 Die Dateien liegen im Ordner [`pi-launcher/`](./pi-launcher/).
 
+![pi-launcher Übersicht](screenshots/pi-launcher-prompt.jpg)
+
 ### Voraussetzungen
 
 - Python 3.7 oder neuer (nur Standardbibliothek, keine Pip-Pakete nötig)
@@ -238,6 +240,8 @@ Danach `pi-launcher\index.html` direkt im Browser öffnen (Doppelklick oder per 
 |-----|--------|
 | Ollama | Live-Output von `ollama serve` beim Start |
 | Pi-Output | Live-Output des zuletzt gestarteten Prompts mit Status (● läuft / ✓ fertig) |
+
+![Pi-Output Sidebar](screenshots/output.jpg)
 
 ### Konfiguration
 
