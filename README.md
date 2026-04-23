@@ -230,9 +230,11 @@ Danach `pi-launcher\index.html` direkt im Browser öffnen (Doppelklick oder per 
 - Gespeicherte Prompts erscheinen als Kacheln im Grid.
 - **Klick** startet `pi -p "<prompt>"` im Arbeitsverzeichnis — Output erscheint live im Tab „Pi-Output" der Sidebar.
 - **Hover** zeigt den letzten Output des Prompts als Tooltip.
+- `✎`-Symbol beim Hovern öffnet den Bearbeiten-Dialog (Name, Gruppe, Text ändern).
 - `✕`-Symbol beim Hovern löscht den Prompt.
 - Laufende Prompts zeigen einen animierten grünen Punkt.
-- **„+ Neuer Prompt"**: Name und Prompt-Text eingeben, im `localStorage` gespeichert.
+- **„+ Neuer Prompt"**: Name, optionale Gruppe und Prompt-Text eingeben. Mit der Option **„Aufgabe vollständig abarbeiten"** wird beim Start automatisch eine entsprechende Anweisung an den Prompt angehängt — nützlich wenn das Modell vorzeitig abbricht.
+- Prompts werden serverseitig in `pi-launcher\prompts.json` gespeichert (Fallback: `localStorage`).
 
 **Sidebar (rechts)**
 
