@@ -637,7 +637,21 @@ let currentTooltipId = null;
 
 // ── Persistence ──────────────────────────────────────────────────────────────
 
-function loadPrompts() {
+async function loadPrompts() {
+  // Try server first (persistent), fall back to localStorage
+  try {
+    const res = await fetch(`${SERVER}/prompts`);
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) {
+        state.prompts = data;
+        // Keep localStorage in sync
+        localStorage.setItem(LS_KEY, JSON.stringify(state.prompts));
+        return;
+      }
+    }
+  } catch {}
+  // Fallback: localStorage (server not running yet)
   try {
     state.prompts = JSON.parse(localStorage.getItem(LS_KEY)) || [];
   } catch {
@@ -646,11 +660,16 @@ function loadPrompts() {
 }
 
 function savePrompts() {
+  // Save to localStorage immediately (synchronous, no flicker)
   try {
     localStorage.setItem(LS_KEY, JSON.stringify(state.prompts));
-  } catch (e) {
-    console.warn("localStorage nicht verfügbar:", e);
-  }
+  } catch {}
+  // Then persist to server file (async, fire-and-forget)
+  fetch(`${SERVER}/prompts`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(state.prompts),
+  }).catch(() => {});
 }
 
 function genId() {
@@ -1423,9 +1442,10 @@ document.addEventListener("click", () => closeModelDropdown());
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 
-loadPrompts();
-renderGrid();
-startStatusPolling();
+loadPrompts().then(() => {
+  renderGrid();
+  startStatusPolling();
+});
 </script>
 </body>
 </html>

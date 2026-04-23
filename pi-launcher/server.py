@@ -9,7 +9,8 @@ import sys
 import urllib.request
 from datetime import datetime
 
-CONFIG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.json")
+CONFIG_PATH   = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.json")
+PROMPTS_PATH  = os.path.join(os.path.dirname(os.path.abspath(__file__)), "prompts.json")
 DEFAULT_WORKDIR = os.path.expanduser("~/Desktop/pi-aufgaben")
 PI_SETTINGS_PATH = os.path.expanduser("~/.pi/agent/settings.json")
 
@@ -86,6 +87,8 @@ class PiLauncherHandler(http.server.BaseHTTPRequestHandler):
             self._handle_get_models()
         elif self.path == "/pi-settings":
             self._handle_get_pi_settings()
+        elif self.path == "/prompts":
+            self._handle_get_prompts()
         else:
             self._json_response(404, {"error": "not found"})
 
@@ -100,6 +103,8 @@ class PiLauncherHandler(http.server.BaseHTTPRequestHandler):
             self._handle_open_pi()
         elif self.path == "/pi-settings":
             self._handle_post_pi_settings()
+        elif self.path == "/prompts":
+            self._handle_post_prompts()
         else:
             self._json_response(404, {"error": "not found"})
 
@@ -133,6 +138,31 @@ class PiLauncherHandler(http.server.BaseHTTPRequestHandler):
     def _handle_get_service_status(self):
         pi_running = _pi_term_proc is not None and _pi_term_proc.poll() is None
         self._json_response(200, {"ollama": ollama_is_running(), "pi": pi_running})
+
+    # ── Prompts ──────────────────────────────────────────────────────────────
+
+    def _handle_get_prompts(self):
+        try:
+            with open(PROMPTS_PATH, encoding="utf-8") as f:
+                self._json_response(200, json.load(f))
+        except (OSError, json.JSONDecodeError):
+            self._json_response(200, [])
+
+    def _handle_post_prompts(self):
+        try:
+            body = self._read_json_body()
+        except (json.JSONDecodeError, ValueError):
+            self._json_response(400, {"error": "invalid JSON"})
+            return
+        if not isinstance(body, list):
+            self._json_response(400, {"error": "Array erwartet"})
+            return
+        try:
+            with open(PROMPTS_PATH, "w", encoding="utf-8") as f:
+                json.dump(body, f, indent=2, ensure_ascii=False)
+            self._json_response(200, {"ok": True})
+        except OSError as e:
+            self._json_response(500, {"error": str(e)})
 
     # ── Models ───────────────────────────────────────────────────────────────
 
