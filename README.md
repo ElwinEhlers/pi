@@ -208,11 +208,10 @@ Die Dateien liegen im Ordner [`pi-launcher/`](./pi-launcher/).
 ### Starten
 
 ```powershell
-cd pi-launcher
-python server.py
+python C:\Users\sbin\Projekte\pi-launcher\server.py
 ```
 
-Danach `pi-launcher\index.html` direkt im Browser öffnen (Doppelklick oder per `file:///...`-Adresse). Der Server muss im Hintergrund laufen.
+Die Web-GUI ist dann unter **http://localhost:8765** erreichbar. Nicht als `file://` öffnen — der Server muss laufen.
 
 ### Aufbau der Oberfläche
 
@@ -256,8 +255,7 @@ Danach `pi-launcher\index.html` direkt im Browser öffnen (Doppelklick oder per 
 
 - `server.py` läuft auf `http://localhost:8765` — Python-Standardbibliothek, keine Pip-Abhängigkeiten
 - Prompts und Ollama-Start werden per **Server-Sent Events (SSE)** live gestreamt
-- `index.html` ist eine einzelne Datei mit inline CSS/JS — kein CDN, kein Framework
-- CORS-Header ermöglichen den direkten Aufruf als `file://` im Browser
+- `index.html` wird von `server.py` unter `/` ausgeliefert — kein CDN, kein Framework
 
 ---
 
