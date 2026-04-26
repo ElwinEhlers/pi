@@ -79,7 +79,9 @@ class PiLauncherHandler(http.server.BaseHTTPRequestHandler):
         self.end_headers()
 
     def do_GET(self):
-        if self.path == "/config":
+        if self.path == "/":
+            self._handle_get_index()
+        elif self.path == "/config":
             self._handle_get_config()
         elif self.path == "/service/status":
             self._handle_get_service_status()
@@ -107,6 +109,21 @@ class PiLauncherHandler(http.server.BaseHTTPRequestHandler):
             self._handle_post_prompts()
         else:
             self._json_response(404, {"error": "not found"})
+
+    # ── Index ─────────────────────────────────────────────────────────────────
+
+    def _handle_get_index(self):
+        index_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "index.html")
+        try:
+            with open(index_path, "rb") as f:
+                body = f.read()
+            self.send_response(200)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+        except OSError as e:
+            self._json_response(500, {"error": str(e)})
 
     # ── Config ────────────────────────────────────────────────────────────────
 
@@ -243,6 +260,7 @@ class PiLauncherHandler(http.server.BaseHTTPRequestHandler):
                 bufsize=1,
                 encoding="utf-8",
                 errors="replace",
+                shell=True,
             )
         except FileNotFoundError:
             sse("[Fehler: 'ollama' nicht gefunden. Ist Ollama installiert?]")
@@ -299,6 +317,7 @@ class PiLauncherHandler(http.server.BaseHTTPRequestHandler):
                 ["cmd", "/k", PI_CMD],
                 cwd=workdir,
                 creationflags=subprocess.CREATE_NEW_CONSOLE,
+                shell=True,
             )
             self._json_response(200, {"ok": True})
         except FileNotFoundError:
@@ -359,6 +378,7 @@ class PiLauncherHandler(http.server.BaseHTTPRequestHandler):
                 bufsize=1,
                 encoding="utf-8",
                 errors="replace",
+                shell=True,
             )
             for line in proc.stdout:
                 sse(line.rstrip())

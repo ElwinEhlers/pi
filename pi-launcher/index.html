@@ -652,11 +652,22 @@ const state = {
   prompts: [],
   outputBuffers: {},
   runningIds: new Set(),
+  workdir: "",
 };
 
 let currentTooltipId = null;
 
 // ── Persistence ──────────────────────────────────────────────────────────────
+
+async function loadConfig() {
+  try {
+    const res = await fetch(`${SERVER}/config`);
+    if (res.ok) {
+      const data = await res.json();
+      state.workdir = data.workdir || "";
+    }
+  } catch {}
+}
 
 async function loadPrompts() {
   // Try server first (persistent), fall back to localStorage
@@ -827,7 +838,7 @@ async function streamRun(id, promptText) {
     response = await fetch(`${SERVER}/run`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt: promptText }),
+      body: JSON.stringify({ prompt: promptText, workdir: state.workdir }),
     });
   } catch (err) {
     state.outputBuffers[id] = `[Verbindungsfehler: ${err.message}]\n[Läuft server.py? python server.py]`;
@@ -1136,6 +1147,7 @@ async function saveSettings() {
       body: JSON.stringify({ workdir }),
     });
     if (res.ok) {
+      state.workdir = workdir;
       closeSettings();
       showToast("Einstellungen gespeichert");
     } else {
@@ -1508,7 +1520,7 @@ document.addEventListener("click", () => closeModelDropdown());
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 
-loadPrompts().then(() => {
+Promise.all([loadPrompts(), loadConfig()]).then(() => {
   renderGrid();
   startStatusPolling();
 });
